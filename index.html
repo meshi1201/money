@@ -159,10 +159,30 @@ const GENRE_COLORS={'食費':'g-食費','日用品':'g-日用品','交通費':'g
 let records=[];let likes={};let activeFilter='すべて';
 let profile={name:'わたし',avatarDataUrl:null};
 let pendingAvatar=null;
-try{records=JSON.parse(localStorage.getItem('kakeiboTL_records')||'[]')}catch(e){}
-try{likes=JSON.parse(localStorage.getItem('kakeiboTL_likes')||'{}')}catch(e){}
-try{const p=JSON.parse(localStorage.getItem('kakeiboTL_profile')||'null');if(p)profile=p;}catch(e){}
-function save(){try{localStorage.setItem('kakeiboTL_records',JSON.stringify(records));localStorage.setItem('kakeiboTL_likes',JSON.stringify(likes));localStorage.setItem('kakeiboTL_profile',JSON.stringify(profile));}catch(e){}}
+try{
+  const r=localStorage.getItem('kakeiboTL_records');
+  if(r) records=JSON.parse(r);
+  console.log('records loaded:', records.length);
+}catch(e){console.error('records load error:',e);}
+try{
+  const l=localStorage.getItem('kakeiboTL_likes');
+  if(l) likes=JSON.parse(l);
+}catch(e){console.error('likes load error:',e);}
+try{
+  const p=localStorage.getItem('kakeiboTL_profile');
+  if(p) profile=JSON.parse(p);
+  console.log('profile loaded:', profile.name);
+}catch(e){console.error('profile load error:',e);}
+function save(){
+  try{
+    localStorage.setItem('kakeiboTL_records', JSON.stringify(records));
+    localStorage.setItem('kakeiboTL_likes', JSON.stringify(likes));
+    localStorage.setItem('kakeiboTL_profile', JSON.stringify(profile));
+  } catch(e){
+    console.error('保存エラー:', e);
+    alert('保存に失敗しました: ' + e.message);
+  }
+}
 function nowStr(){const d=new Date();return{date:d.toISOString().slice(0,10),ts:d.getTime()};}
 function relTime(ts){const diff=Date.now()-ts;if(diff<60000)return 'たった今';if(diff<3600000)return Math.floor(diff/60000)+'分前';if(diff<86400000)return Math.floor(diff/3600000)+'時間前';const d=new Date(ts);return(d.getMonth()+1)+'月'+d.getDate()+'日';}
 function addPost(){const memo=document.getElementById('memo').value.trim();const amount=parseInt(document.getElementById('amount').value);const genre=document.getElementById('genre').value;if(!memo||!amount||amount<=0)return;const{date,ts}=nowStr();records.unshift({id:ts,memo,amount,genre,date,ts});save();document.getElementById('memo').value='';document.getElementById('amount').value='';render();}
@@ -191,7 +211,11 @@ function loadAvatar(e){const file=e.target.files[0];if(!file)return;const reader
 function saveProfile(){profile.name=document.getElementById('profileName').value.trim()||'わたし';if(pendingAvatar)profile.avatarDataUrl=pendingAvatar;save();closeModal();render();}
 document.getElementById('memo').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();document.getElementById('amount').focus();}});
 document.getElementById('amount').addEventListener('keydown',e=>{if(e.key==='Enter')addPost();});
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js')
+    .then(r => console.log('SW registered'))
+    .catch(e => console.warn('SW failed (non-critical):', e));
+}
 render();
 </script>
 </body>
